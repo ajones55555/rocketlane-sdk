@@ -1,0 +1,51 @@
+{
+  "name": "rocketlane-sdk",
+  "version": "1.0.0",
+  "description": "Official TypeScript SDK for Rocketlane API",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts",
+    "test": "jest",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "rocketlane",
+    "api",
+    "sdk",
+    "typescript",
+    "project-management",
+    "tasks"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/jest": "^29.5.0",
+    "@types/node": "^20.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "jest": "^29.0.0",
+    "ts-jest": "^29.1.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/rocketlane-sdk.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/rocketlane-sdk/issues"
+  },
+  "homepage": "https://github.com/your-org/rocketlane-sdk#readme"
+}
