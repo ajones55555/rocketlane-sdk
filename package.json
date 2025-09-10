@@ -45,10 +45,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-org/rocketlane-sdk.git"
+    "url": "https://github.com/ajones55555/rocketlane-sdk.git"
   },
   "bugs": {
-    "url": "https://github.com/your-org/rocketlane-sdk/issues"
+    "url": "https://github.com/ajones55555/rocketlane-sdk/issues"
   },
-  "homepage": "https://github.com/your-org/rocketlane-sdk#readme"
+  "homepage": "https://github.com/ajones55555/rocketlane-sdk#readme"
 }
