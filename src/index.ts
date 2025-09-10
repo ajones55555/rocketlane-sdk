@@ -43,21 +43,6 @@ export * from './resources/space-documents';
 
 // Utils
 export * from './utils/http-client';
+export { BaseResource } from './utils/base-resource';
 
 export default RocketlaneClient;
-
-// fetch projects by user id 14141 and then return their names in a CSV String
-
-const client = new RocketlaneClient({
-  apiKey: ''
-});
-
-const userId = 14141;
-
-client.projects.list({
-  userId
-}).then(projects => {
-  const projectNames = projects.data.map(project => project.name);
-  const csvString = projectNames.join(',');
-  console.log(csvString);
-});

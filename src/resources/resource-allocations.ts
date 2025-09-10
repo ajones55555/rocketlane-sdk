@@ -1,4 +1,4 @@
-import { HttpClient } from '../utils/http-client';
+import { BaseResource } from '../utils/base-resource';
 
 export interface ResourceAllocation {
   allocationId: number;
@@ -36,16 +36,16 @@ export interface ResourceAllocationsQueryParams {
   endDateTo?: string;
   sortBy?: 'startDate' | 'endDate' | 'allocatedMinutes' | 'createdAt';
   sortOrder?: 'asc' | 'desc';
+  [key: string]: unknown;
 }
 
-export class ResourceAllocationsResource {
-  constructor(private httpClient: HttpClient) {}
+export class ResourceAllocationsResource extends BaseResource {
 
   async list(params?: ResourceAllocationsQueryParams): Promise<ResourceAllocationsListResponse> {
     return this.httpClient.get<ResourceAllocationsListResponse>('/api/1.0/resource-allocations', params);
   }
 
-  async get(allocationId: number): Promise<ResourceAllocation> {
+  async getResourceAllocation(allocationId: number): Promise<ResourceAllocation> {
     return this.httpClient.get<ResourceAllocation>(`/api/1.0/resource-allocations/${allocationId}`);
   }
 
@@ -59,5 +59,22 @@ export class ResourceAllocationsResource {
 
   async getByDateRange(startDateFrom: string, startDateTo: string, params?: Omit<ResourceAllocationsQueryParams, 'startDateFrom' | 'startDateTo'>): Promise<ResourceAllocationsListResponse> {
     return this.list({ ...params, startDateFrom, startDateTo });
+  }
+
+  // Pagination helper methods
+  async getNextPage(response: ResourceAllocationsListResponse, originalParams?: ResourceAllocationsQueryParams): Promise<ResourceAllocationsListResponse | null> {
+    return this.getNextPageInternal(response, originalParams || {}, this.list.bind(this));
+  }
+
+  async getAllResourceAllocations(params?: ResourceAllocationsQueryParams): Promise<ResourceAllocation[]> {
+    return this.getAllPages(params || {}, this.list.bind(this));
+  }
+
+  iterateResourceAllocationPages(params?: ResourceAllocationsQueryParams): AsyncGenerator<ResourceAllocationsListResponse, void, unknown> {
+    return this.iteratePages(params || {}, this.list.bind(this));
+  }
+
+  iterateResourceAllocations(params?: ResourceAllocationsQueryParams): AsyncGenerator<ResourceAllocation, void, unknown> {
+    return this.iterateItems(params || {}, this.list.bind(this));
   }
 }

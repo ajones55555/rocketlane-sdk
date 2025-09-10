@@ -149,10 +149,12 @@ async function errorHandlingExample() {
   }
 }
 
-// Pagination example
+// Pagination examples
 async function paginationExample() {
-  console.log('\n📄 Pagination Example');
+  console.log('\n📄 Pagination Examples');
   
+  // Example 1: Manual pagination (old way)
+  console.log('\n1. Manual Pagination:');
   let totalTasks = 0;
   let pageCount = 0;
   let nextPageToken: string | undefined = undefined;
@@ -167,14 +169,55 @@ async function paginationExample() {
     pageCount++;
     nextPageToken = response.pagination.nextPageToken;
 
-    console.log(`Page ${pageCount}: ${response.data.length} tasks`);
+    console.log(`  Page ${pageCount}: ${response.data.length} tasks`);
 
     // Limit to first few pages for demo
     if (pageCount >= 3) break;
 
   } while (nextPageToken);
 
-  console.log(`Total tasks retrieved: ${totalTasks} across ${pageCount} pages`);
+  console.log(`  Total tasks retrieved: ${totalTasks} across ${pageCount} pages`);
+
+  // Example 2: Using getNextPage helper
+  console.log('\n2. Using getNextPage helper:');
+  const firstPage = await client.tasks.list({ pageSize: 10 });
+  console.log(`  First page: ${firstPage.data.length} tasks`);
+  
+  if (firstPage.pagination.hasMore) {
+    const secondPage = await client.tasks.getNextPage(firstPage, { pageSize: 10 });
+    if (secondPage) {
+      console.log(`  Second page: ${secondPage.data.length} tasks`);
+    }
+  }
+
+  // Example 3: Get all items at once (with limits)
+  console.log('\n3. Get all items at once:');
+  try {
+    const allTasks = await client.tasks.getAllTasks({ pageSize: 20 }); // Small page size for demo
+    console.log(`  Retrieved ${allTasks.length} total tasks across all pages`);
+  } catch (error) {
+    console.log('  Could not retrieve all tasks (likely too many)');
+  }
+
+  // Example 4: Iterate through pages
+  console.log('\n4. Iterate through pages:');
+  let pageNum = 0;
+  for await (const page of client.tasks.iterateTaskPages({ pageSize: 10 })) {
+    pageNum++;
+    console.log(`  Page ${pageNum}: ${page.data.length} tasks`);
+    if (pageNum >= 3) break; // Limit for demo
+  }
+
+  // Example 5: Iterate through individual items
+  console.log('\n5. Iterate through individual items:');
+  let itemCount = 0;
+  for await (const task of client.tasks.iterateTasks({ pageSize: 10 })) {
+    itemCount++;
+    console.log(`  Task ${itemCount}: ${task.taskName}`);
+    if (itemCount >= 5) break; // Limit for demo
+  }
+
+  console.log('\n✅ Pagination examples completed!');
 }
 
 // Run all examples

@@ -14,8 +14,8 @@ export class HttpClient {
     };
 
     this.client = axios.create({
-      baseURL: this.config.baseUrl,
-      timeout: this.config.timeout,
+      baseURL: this.config.baseUrl || 'https://api.rocketlane.com',
+      timeout: this.config.timeout || 30000,
       headers: {
         'Authorization': `Bearer ${this.config.apiKey}`,
         'Content-Type': 'application/json',
@@ -42,7 +42,7 @@ export class HttpClient {
     );
 
     this.client.interceptors.request.use((config) => {
-      config.metadata = { startTime: Date.now() };
+      (config as any).metadata = { startTime: Date.now() };
       return config;
     });
   }
@@ -53,7 +53,7 @@ export class HttpClient {
       url: config.url,
       data: config.data,
       params: config.params,
-      headers: config.headers,
+      ...(config.headers && { headers: config.headers }),
     };
 
     let attempts = 0;

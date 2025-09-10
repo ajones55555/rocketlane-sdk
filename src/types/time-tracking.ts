@@ -147,7 +147,7 @@ export interface TimeEntryCategory {
 
 export interface TimeEntryCategoriesListResponse {
   data: TimeEntryCategory[];
-  pagination?: {
+  pagination: {
     pageSize: number;
     hasMore: boolean;
     totalRecordCount: number;

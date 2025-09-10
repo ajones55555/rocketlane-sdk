@@ -1,4 +1,4 @@
-import { HttpClient } from '../utils/http-client';
+import { BaseResource } from '../utils/base-resource';
 import {
   TimeEntry,
   TimeEntriesListResponse,
@@ -18,15 +18,14 @@ import {
   TimeEntryReportParams,
 } from '../types/time-tracking';
 
-export class TimeTrackingResource {
-  constructor(private httpClient: HttpClient) {}
+export class TimeTrackingResource extends BaseResource {
 
   // Time Entries
   async list(params?: TimeEntriesQueryParams): Promise<TimeEntriesListResponse> {
     return this.httpClient.get<TimeEntriesListResponse>('/api/1.0/time-entries', params);
   }
 
-  async get(timeEntryId: number): Promise<TimeEntry> {
+  async getTimeEntry(timeEntryId: number): Promise<TimeEntry> {
     return this.httpClient.get<TimeEntry>(`/api/1.0/time-entries/${timeEntryId}`);
   }
 
@@ -38,7 +37,7 @@ export class TimeTrackingResource {
     return this.httpClient.put<TimeEntry>(`/api/1.0/time-entries/${timeEntryId}`, data);
   }
 
-  async delete(timeEntryId: number): Promise<void> {
+  async deleteTimeEntry(timeEntryId: number): Promise<void> {
     return this.httpClient.delete<void>(`/api/1.0/time-entries/${timeEntryId}`);
   }
 
@@ -156,5 +155,22 @@ export class TimeTrackingResource {
 
   async getActiveTimer(): Promise<{ timerId: string; startedAt: number; totalMinutes: number } | null> {
     return this.httpClient.get('/api/1.0/time-entries/timer/active');
+  }
+
+  // Pagination helper methods
+  async getNextPage(response: TimeEntriesListResponse, originalParams?: TimeEntriesQueryParams): Promise<TimeEntriesListResponse | null> {
+    return this.getNextPageInternal(response, originalParams || {}, this.list.bind(this));
+  }
+
+  async getAllTimeEntries(params?: TimeEntriesQueryParams): Promise<TimeEntry[]> {
+    return this.getAllPages(params || {}, this.list.bind(this));
+  }
+
+  iterateTimeEntryPages(params?: TimeEntriesQueryParams): AsyncGenerator<TimeEntriesListResponse, void, unknown> {
+    return this.iteratePages(params || {}, this.list.bind(this));
+  }
+
+  iterateTimeEntries(params?: TimeEntriesQueryParams): AsyncGenerator<TimeEntry, void, unknown> {
+    return this.iterateItems(params || {}, this.list.bind(this));
   }
 }

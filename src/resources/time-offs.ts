@@ -1,4 +1,4 @@
-import { HttpClient } from '../utils/http-client';
+import { BaseResource } from '../utils/base-resource';
 
 export interface TimeOff {
   timeOffId: number;
@@ -63,14 +63,13 @@ export interface TimeOffsQueryParams {
   [key: string]: unknown;
 }
 
-export class TimeOffsResource {
-  constructor(private httpClient: HttpClient) {}
+export class TimeOffsResource extends BaseResource {
 
   async list(params?: TimeOffsQueryParams): Promise<TimeOffsListResponse> {
     return this.httpClient.get<TimeOffsListResponse>('/api/1.0/time-offs', params);
   }
 
-  async get(timeOffId: number): Promise<TimeOff> {
+  async getTimeOff(timeOffId: number): Promise<TimeOff> {
     return this.httpClient.get<TimeOff>(`/api/1.0/time-offs/${timeOffId}`);
   }
 
@@ -82,7 +81,7 @@ export class TimeOffsResource {
     return this.httpClient.put<TimeOff>(`/api/1.0/time-offs/${timeOffId}`, data);
   }
 
-  async delete(timeOffId: number): Promise<void> {
+  async deleteResource(timeOffId: number): Promise<void> {
     return this.httpClient.delete<void>(`/api/1.0/time-offs/${timeOffId}`);
   }
 
@@ -116,5 +115,22 @@ export class TimeOffsResource {
 
   async getRejected(params?: Omit<TimeOffsQueryParams, 'status'>): Promise<TimeOffsListResponse> {
     return this.getByStatus('rejected', params);
+  }
+
+  // Pagination helper methods
+  async getNextPage(response: TimeOffsListResponse, originalParams?: TimeOffsQueryParams): Promise<TimeOffsListResponse | null> {
+    return this.getNextPageInternal(response, originalParams || {}, this.list.bind(this));
+  }
+
+  async getAllTimeOffs(params?: TimeOffsQueryParams): Promise<TimeOff[]> {
+    return this.getAllPages(params || {}, this.list.bind(this));
+  }
+
+  iterateTimeOffPages(params?: TimeOffsQueryParams): AsyncGenerator<TimeOffsListResponse, void, unknown> {
+    return this.iteratePages(params || {}, this.list.bind(this));
+  }
+
+  iterateTimeOffs(params?: TimeOffsQueryParams): AsyncGenerator<TimeOff, void, unknown> {
+    return this.iterateItems(params || {}, this.list.bind(this));
   }
 }

@@ -42,7 +42,7 @@ export interface Field {
 
 export interface FieldsListResponse {
   data: Field[];
-  pagination?: {
+  pagination: {
     pageSize: number;
     hasMore: boolean;
     totalRecordCount: number;

@@ -1,4 +1,4 @@
-import { HttpClient } from '../utils/http-client';
+import { BaseResource } from '../utils/base-resource';
 import {
   Phase,
   PhasesListResponse,
@@ -10,14 +10,13 @@ import {
   DuplicatePhaseRequest,
 } from '../types/phases';
 
-export class PhasesResource {
-  constructor(private httpClient: HttpClient) {}
+export class PhasesResource extends BaseResource {
 
   async list(params?: PhasesQueryParams): Promise<PhasesListResponse> {
     return this.httpClient.get<PhasesListResponse>('/api/1.0/phases', params);
   }
 
-  async get(phaseId: number): Promise<Phase> {
+  async getPhase(phaseId: number): Promise<Phase> {
     return this.httpClient.get<Phase>(`/api/1.0/phases/${phaseId}`);
   }
 
@@ -29,7 +28,7 @@ export class PhasesResource {
     return this.httpClient.put<Phase>(`/api/1.0/phases/${phaseId}`, data);
   }
 
-  async delete(phaseId: number): Promise<void> {
+  async deleteResource(phaseId: number): Promise<void> {
     return this.httpClient.delete<void>(`/api/1.0/phases/${phaseId}`);
   }
 
@@ -96,5 +95,22 @@ export class PhasesResource {
 
   async getByDateRange(startDateFrom: string, startDateTo: string, params?: Omit<PhasesQueryParams, 'startDateFrom' | 'startDateTo'>): Promise<PhasesListResponse> {
     return this.list({ ...params, startDateFrom, startDateTo });
+  }
+
+  // Pagination helper methods
+  async getNextPage(response: PhasesListResponse, originalParams?: PhasesQueryParams): Promise<PhasesListResponse | null> {
+    return this.getNextPageInternal(response, originalParams || {}, this.list.bind(this));
+  }
+
+  async getAllPhases(params?: PhasesQueryParams): Promise<Phase[]> {
+    return this.getAllPages(params || {}, this.list.bind(this));
+  }
+
+  iteratePhasePages(params?: PhasesQueryParams): AsyncGenerator<PhasesListResponse, void, unknown> {
+    return this.iteratePages(params || {}, this.list.bind(this));
+  }
+
+  iteratePhases(params?: PhasesQueryParams): AsyncGenerator<Phase, void, unknown> {
+    return this.iterateItems(params || {}, this.list.bind(this));
   }
 }

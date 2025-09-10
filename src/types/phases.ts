@@ -28,7 +28,7 @@ export interface Phase {
 
 export interface PhasesListResponse {
   data: Phase[];
-  pagination?: {
+  pagination: {
     pageSize: number;
     hasMore: boolean;
     totalRecordCount: number;

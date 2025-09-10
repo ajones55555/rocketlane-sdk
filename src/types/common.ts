@@ -21,6 +21,25 @@ export interface PaginatedResponse<T> {
   };
 }
 
+export interface RocketlanePagination {
+  pageSize: number;
+  hasMore: boolean;
+  totalRecordCount: number;
+  nextPage?: string;
+  nextPageToken?: string;
+}
+
+export interface BasePaginatedResponse<T> {
+  data: T[];
+  pagination: RocketlanePagination;
+}
+
+export interface PaginationOptions {
+  pageSize?: number;
+  pageToken?: string;
+  [key: string]: unknown;
+}
+
 export interface QueryParams {
   page?: number;
   limit?: number;

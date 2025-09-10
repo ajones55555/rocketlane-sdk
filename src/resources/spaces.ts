@@ -1,4 +1,4 @@
-import { HttpClient } from '../utils/http-client';
+import { BaseResource } from '../utils/base-resource';
 
 export interface Space {
   spaceId: number;
@@ -86,14 +86,13 @@ export interface RemoveSpaceMembersRequest {
   [key: string]: unknown;
 }
 
-export class SpacesResource {
-  constructor(private httpClient: HttpClient) {}
+export class SpacesResource extends BaseResource {
 
   async list(params?: SpacesQueryParams): Promise<SpacesListResponse> {
     return this.httpClient.get<SpacesListResponse>('/api/1.0/spaces', params);
   }
 
-  async get(spaceId: number): Promise<Space> {
+  async getSpace(spaceId: number): Promise<Space> {
     return this.httpClient.get<Space>(`/api/1.0/spaces/${spaceId}`);
   }
 
@@ -105,7 +104,7 @@ export class SpacesResource {
     return this.httpClient.put<Space>(`/api/1.0/spaces/${spaceId}`, data);
   }
 
-  async delete(spaceId: number): Promise<void> {
+  async deleteResource(spaceId: number): Promise<void> {
     return this.httpClient.delete<void>(`/api/1.0/spaces/${spaceId}`);
   }
 
@@ -151,5 +150,22 @@ export class SpacesResource {
 
   async search(query: string, params?: Omit<SpacesQueryParams, 'search'>): Promise<SpacesListResponse> {
     return this.list({ ...params, search: query });
+  }
+
+  // Pagination helper methods
+  async getNextPage(response: SpacesListResponse, originalParams?: SpacesQueryParams): Promise<SpacesListResponse | null> {
+    return this.getNextPageInternal(response, originalParams || {}, this.list.bind(this));
+  }
+
+  async getAllSpaces(params?: SpacesQueryParams): Promise<Space[]> {
+    return this.getAllPages(params || {}, this.list.bind(this));
+  }
+
+  iterateSpacePages(params?: SpacesQueryParams): AsyncGenerator<SpacesListResponse, void, unknown> {
+    return this.iteratePages(params || {}, this.list.bind(this));
+  }
+
+  iterateSpaces(params?: SpacesQueryParams): AsyncGenerator<Space, void, unknown> {
+    return this.iterateItems(params || {}, this.list.bind(this));
   }
 }

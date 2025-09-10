@@ -1,4 +1,5 @@
-import { HttpClient } from '../utils/http-client';
+import { BaseResource } from '../utils/base-resource';
+import { NavigableProject, NavigableObjectFactory } from '../utils/relationship-navigation';
 import {
   Project,
   ProjectsListResponse,
@@ -12,8 +13,8 @@ import {
   UnassignPlaceholderRequest,
 } from '../types/projects';
 
-export class ProjectsResource {
-  constructor(private httpClient: HttpClient) {}
+export class ProjectsResource extends BaseResource {
+  private navFactory?: NavigableObjectFactory;
 
   async list(params?: ProjectsQueryParams): Promise<ProjectsListResponse> {
     return this.httpClient.get<ProjectsListResponse>('/api/1.0/projects', params);
@@ -32,7 +33,7 @@ export class ProjectsResource {
     return this.httpClient.put<Project>(`/api/1.0/projects/${projectId}`, data);
   }
 
-  async delete(projectId: number): Promise<void> {
+  async deleteResource(projectId: number): Promise<void> {
     return this.httpClient.delete<void>(`/api/1.0/projects/${projectId}`);
   }
 
@@ -80,5 +81,64 @@ export class ProjectsResource {
 
   async search(query: string, params?: Omit<ProjectsQueryParams, 'search'>): Promise<ProjectsListResponse> {
     return this.list({ ...params, search: query });
+  }
+
+  // Pagination helper methods
+  async getNextPage(response: ProjectsListResponse, originalParams?: ProjectsQueryParams): Promise<ProjectsListResponse | null> {
+    return this.getNextPageInternal(response, originalParams || {}, this.list.bind(this));
+  }
+
+  async getAllProjects(params?: ProjectsQueryParams): Promise<Project[]> {
+    return this.getAllPages(params || {}, this.list.bind(this));
+  }
+
+  iterateProjectPages(params?: ProjectsQueryParams): AsyncGenerator<ProjectsListResponse, void, unknown> {
+    return this.iteratePages(params || {}, this.list.bind(this));
+  }
+
+  iterateProjects(params?: ProjectsQueryParams): AsyncGenerator<Project, void, unknown> {
+    return this.iterateItems(params || {}, this.list.bind(this));
+  }
+
+  // Relationship Navigation
+
+  /**
+   * Set the navigation factory (called by client)
+   */
+  setNavigationFactory(factory: NavigableObjectFactory): void {
+    this.navFactory = factory;
+  }
+
+  /**
+   * Get a navigable project with relationship methods
+   */
+  async getNavigable(projectId: number): Promise<NavigableProject> {
+    const project = await this.get(projectId);
+    if (!this.navFactory) {
+      throw new Error('Navigation factory not initialized');
+    }
+    return this.navFactory.createNavigableProject(project);
+  }
+
+  /**
+   * List projects as navigable objects
+   */
+  async listNavigable(params?: ProjectsQueryParams): Promise<NavigableProject[]> {
+    const response = await this.list(params);
+    if (!this.navFactory) {
+      throw new Error('Navigation factory not initialized');
+    }
+    return response.data.map(project => this.navFactory!.createNavigableProject(project));
+  }
+
+  /**
+   * Get all projects as navigable objects
+   */
+  async getAllNavigableProjects(params?: ProjectsQueryParams): Promise<NavigableProject[]> {
+    const projects = await this.getAllProjects(params);
+    if (!this.navFactory) {
+      throw new Error('Navigation factory not initialized');
+    }
+    return projects.map(project => this.navFactory!.createNavigableProject(project));
   }
 }

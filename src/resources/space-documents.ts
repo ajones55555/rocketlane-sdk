@@ -1,4 +1,4 @@
-import { HttpClient } from '../utils/http-client';
+import { BaseResource } from '../utils/base-resource';
 
 export interface SpaceDocument {
   documentId: number;
@@ -97,14 +97,13 @@ export interface DocumentVersionsListResponse {
   };
 }
 
-export class SpaceDocumentsResource {
-  constructor(private httpClient: HttpClient) {}
+export class SpaceDocumentsResource extends BaseResource {
 
   async list(params?: SpaceDocumentsQueryParams): Promise<SpaceDocumentsListResponse> {
     return this.httpClient.get<SpaceDocumentsListResponse>('/api/1.0/space-documents', params);
   }
 
-  async get(documentId: number): Promise<SpaceDocument> {
+  async getSpaceDocument(documentId: number): Promise<SpaceDocument> {
     return this.httpClient.get<SpaceDocument>(`/api/1.0/space-documents/${documentId}`);
   }
 
@@ -116,7 +115,7 @@ export class SpaceDocumentsResource {
     return this.httpClient.put<SpaceDocument>(`/api/1.0/space-documents/${documentId}`, data);
   }
 
-  async delete(documentId: number): Promise<void> {
+  async deleteResource(documentId: number): Promise<void> {
     return this.httpClient.delete<void>(`/api/1.0/space-documents/${documentId}`);
   }
 
@@ -177,5 +176,22 @@ export class SpaceDocumentsResource {
 
   async search(query: string, params?: Omit<SpaceDocumentsQueryParams, 'search'>): Promise<SpaceDocumentsListResponse> {
     return this.list({ ...params, search: query });
+  }
+
+  // Pagination helper methods
+  async getNextPage(response: SpaceDocumentsListResponse, originalParams?: SpaceDocumentsQueryParams): Promise<SpaceDocumentsListResponse | null> {
+    return this.getNextPageInternal(response, originalParams || {}, this.list.bind(this));
+  }
+
+  async getAllSpaceDocuments(params?: SpaceDocumentsQueryParams): Promise<SpaceDocument[]> {
+    return this.getAllPages(params || {}, this.list.bind(this));
+  }
+
+  iterateSpaceDocumentPages(params?: SpaceDocumentsQueryParams): AsyncGenerator<SpaceDocumentsListResponse, void, unknown> {
+    return this.iteratePages(params || {}, this.list.bind(this));
+  }
+
+  iterateSpaceDocuments(params?: SpaceDocumentsQueryParams): AsyncGenerator<SpaceDocument, void, unknown> {
+    return this.iterateItems(params || {}, this.list.bind(this));
   }
 }

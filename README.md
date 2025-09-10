@@ -1,6 +1,6 @@
 # Rocketlane SDK
 
-Official TypeScript SDK for the Rocketlane API. Provides comprehensive, type-safe access to all Rocketlane resources including tasks, projects, users, time tracking, and more.
+Unofficial TypeScript SDK for the Rocketlane API. Provides comprehensive, type-safe access to all Rocketlane resources including tasks, projects, users, time tracking, and more.
 
 ## Installation
 
@@ -362,38 +362,125 @@ try {
 
 ## Pagination
 
-The SDK handles pagination automatically. You can control page size and iterate through results:
+The SDK provides multiple ways to handle paginated responses with two distinct approaches:
+
+### 🎯 Choose Your Style
+
+**Option 1: Resource-based methods** (traditional)
+```typescript
+const response = await client.tasks.list({ pageSize: 100 });
+const nextPage = await client.tasks.getNextPage(response, { pageSize: 100 });
+```
+
+**Option 2: Response-based methods** (intuitive)  
+```typescript
+const response = await client.tasks.listWithPagination({ pageSize: 100 });
+const nextPage = await response.getNextPage();
+```
+
+### Resource-Based Pagination (Traditional)
 
 ```typescript
-// Get first page with custom page size
+// Get next page via resource method
 const firstPage = await client.tasks.list({ pageSize: 100 });
+const nextPage = await client.tasks.getNextPage(firstPage, { pageSize: 100 });
 
-// Get next page using token
-if (firstPage.pagination.hasMore) {
-  const nextPage = await client.tasks.list({
-    pageToken: firstPage.pagination.nextPageToken,
+// Get all results at once
+const allTasks = await client.tasks.getAllTasks({ projectId: 123456 });
+
+// Iterate through pages/items
+for await (const page of client.tasks.iterateTaskPages({ status: 1 })) {
+  console.log(`Page with ${page.data.length} tasks`);
+}
+
+for await (const task of client.tasks.iterateTasks({ status: 1 })) {
+  console.log(`Task: ${task.taskName}`);
+}
+```
+
+### Response-Based Pagination (Intuitive)
+
+```typescript
+// Get enhanced response with built-in pagination methods
+const response = await client.tasks.listWithPagination({ pageSize: 100 });
+
+// Much cleaner next page syntax
+const nextPage = await response.getNextPage();
+const thirdPage = await nextPage?.getNextPage();
+
+// Get all remaining items from this response
+const allRemaining = await response.getAllRemaining();
+
+// Iterate through remaining pages/items from this response
+for await (const page of response.iterateRemainingPages()) {
+  console.log(`Page with ${page.data.length} tasks`);
+}
+
+for await (const task of response.iterateRemainingItems()) {
+  console.log(`Task: ${task.taskName}`);
+}
+```
+
+### Comparison: Which Should You Use?
+
+| Feature | Resource-Based | Response-Based |
+|---------|---------------|----------------|
+| **Syntax** | `client.tasks.getNextPage(response, params)` | `response.getNextPage()` |
+| **Intuitive** | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
+| **Flexible** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ |
+| **Type Safety** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
+| **Parameter Control** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ |
+
+**Recommendation**: 
+- Use **response-based** for simple, straightforward pagination
+- Use **resource-based** when you need to modify parameters between pages
+
+### Manual Pagination (Advanced)
+```typescript
+// Manual pagination with full control
+let pageToken: string | undefined;
+do {
+  const response = await client.tasks.list({
+    projectId: 123456,
+    pageToken,
     pageSize: 100
   });
-}
+  
+  // Process response.data
+  console.log(`Got ${response.data.length} tasks`);
+  
+  pageToken = response.pagination.nextPageToken;
+} while (response.pagination.hasMore);
+```
 
-// Helper function to get all results
-async function getAllTasks(projectId: number) {
-  let allTasks = [];
-  let nextPageToken = undefined;
-  
-  do {
-    const response = await client.tasks.list({
-      projectId,
-      pageToken: nextPageToken,
-      pageSize: 100
-    });
-    
-    allTasks.push(...response.data);
-    nextPageToken = response.pagination.nextPageToken;
-  } while (response.pagination.hasMore);
-  
-  return allTasks;
-}
+### Pagination Methods Available on All Resources
+
+Every paginated resource provides these helper methods:
+
+- `getNextPage(response, originalParams)` - Get the next page from a response
+- `getAll[Resources](params)` - Get all items across all pages
+- `iterate[Resource]Pages(params)` - Async generator for pages
+- `iterate[Resources](params)` - Async generator for individual items
+
+Examples:
+```typescript
+// Tasks
+const allTasks = await client.tasks.getAllTasks();
+for await (const task of client.tasks.iterateTasks()) { /* ... */ }
+
+// Projects  
+const allProjects = await client.projects.getAllProjects();
+for await (const project of client.projects.iterateProjects()) { /* ... */ }
+
+// Users
+const allUsers = await client.users.getAllUsers();
+for await (const user of client.users.iterateUsers()) { /* ... */ }
+
+// Time Entries
+const allTimeEntries = await client.timeTracking.getAllTimeEntries();
+for await (const entry of client.timeTracking.iterateTimeEntries()) { /* ... */ }
+
+// And so on for all resources...
 ```
 
 ## TypeScript Support

@@ -1,4 +1,4 @@
-import { HttpClient } from '../utils/http-client';
+import { BaseResource } from '../utils/base-resource';
 import {
   Field,
   FieldsListResponse,
@@ -13,15 +13,14 @@ import {
   UpdateEntityFieldsRequest,
 } from '../types/fields';
 
-export class FieldsResource {
-  constructor(private httpClient: HttpClient) {}
+export class FieldsResource extends BaseResource {
 
   // Field Management
   async list(params?: FieldsQueryParams): Promise<FieldsListResponse> {
     return this.httpClient.get<FieldsListResponse>('/api/1.0/fields', params);
   }
 
-  async get(fieldId: string): Promise<Field> {
+  async getField(fieldId: string): Promise<Field> {
     return this.httpClient.get<Field>(`/api/1.0/fields/${fieldId}`);
   }
 
@@ -33,7 +32,7 @@ export class FieldsResource {
     return this.httpClient.put<Field>(`/api/1.0/fields/${fieldId}`, data);
   }
 
-  async delete(fieldId: string): Promise<void> {
+  async deleteResource(fieldId: string): Promise<void> {
     return this.httpClient.delete<void>(`/api/1.0/fields/${fieldId}`);
   }
 
@@ -148,5 +147,22 @@ export class FieldsResource {
 
   async getNumberFields(params?: Omit<FieldsQueryParams, 'type'>): Promise<FieldsListResponse> {
     return this.getByType('number', params);
+  }
+
+  // Pagination helper methods
+  async getNextPage(response: FieldsListResponse, originalParams?: FieldsQueryParams): Promise<FieldsListResponse | null> {
+    return this.getNextPageInternal(response, originalParams || {}, this.list.bind(this));
+  }
+
+  async getAllFields(params?: FieldsQueryParams): Promise<Field[]> {
+    return this.getAllPages(params || {}, this.list.bind(this));
+  }
+
+  iterateFieldPages(params?: FieldsQueryParams): AsyncGenerator<FieldsListResponse, void, unknown> {
+    return this.iteratePages(params || {}, this.list.bind(this));
+  }
+
+  iterateFields(params?: FieldsQueryParams): AsyncGenerator<Field, void, unknown> {
+    return this.iterateItems(params || {}, this.list.bind(this));
   }
 }
