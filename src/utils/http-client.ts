@@ -17,7 +17,7 @@ export class HttpClient {
       baseURL: this.config.baseUrl || 'https://api.rocketlane.com',
       timeout: this.config.timeout || 30000,
       headers: {
-        'Authorization': `Bearer ${this.config.apiKey}`,
+        'api-key': this.config.apiKey,
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
